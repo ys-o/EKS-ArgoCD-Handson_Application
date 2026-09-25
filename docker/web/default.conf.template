@@ -1,0 +1,15 @@
+server {
+    listen 8080;
+    root /usr/share/nginx/html;
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy no-referrer always;
+    add_header Content-Security-Policy "default-src 'none'; style-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'" always;
+    location = /style.css { try_files $uri =404; }
+    location / {
+        include /etc/nginx/fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME /var/www/app/public/index.php;
+        fastcgi_pass ${PHP_UPSTREAM};
+        fastcgi_connect_timeout 3s;
+        fastcgi_read_timeout 10s;
+    }
+}

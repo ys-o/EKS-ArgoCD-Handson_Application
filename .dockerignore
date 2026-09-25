@@ -1,0 +1,8 @@
+.git
+.env
+.env.*
+certs
+tests
+README.md
+compose.yaml
+LICENSE
