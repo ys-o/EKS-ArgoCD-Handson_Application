@@ -2,28 +2,30 @@ name: CI：ビルド、テスト、ECRにPUSH
 
 on:
   push:
+    branches:
+      - main
 
 jobs:
-  CI:
-    name: CI
+  CI_1-build_and_test:
+    name: CI_1-ビルドとテスト
     runs-on: ubuntu-latest
     env:
       DB_PASSWORD: cipassword
       MYSQL_ROOT_PASSWORD: cipassword
 
     steps:
-      - name: マシンに資材を配置
+      - name: GHAマシンに資材を配置
         uses: actions/checkout@v7
 
-      - name: docker compose
+      - name: docker compose実行
         run: docker compose up -d --build
 
-      - name: php構文チェック
+      - name: テスト1：php構文チェック
         run: |
           docker compose exec -T php php -l public/index.php
           docker compose exec -T php php -l src/status.php
 
-      - name: HTTP疎通チェック
+      - name: テスト2：HTTP疎通チェック
         run: |
           curl --fail --silent --show-error --retry 30 --retry-delay 2 --retry-all-errors http://127.0.0.1:8080/health
           curl --fail --silent --show-error --retry 30 --retry-delay 2 --retry-all-errors http://127.0.0.1:8080/ready
@@ -31,3 +33,25 @@ jobs:
       - name: コンテナ破棄
         if: always()
         run: docker compose down -v
+
+  CI_2-push_to_ecr:
+    name: CI_2-ECRにプッシュ（テスト成功時のみ）
+    runs-on: ubuntu-latest
+    needs: CI_1-build_and_test
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: GHAマシンに資材を配置
+        uses: actions/checkout@v7
+
+      - name: AWS認証情報取得
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: ECRにログイン
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
