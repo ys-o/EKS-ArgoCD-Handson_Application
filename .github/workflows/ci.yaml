@@ -63,10 +63,10 @@ jobs:
 
       - name: イメージにタグ付け
         run: |
-          docker tag web:local "${{steps.login-ecr.outputs.registry}}/eksargocd-ecr-repository-web:sha-${{github.sha}}"
-          docker tag ap:local "${{steps.login-ecr.outputs.registry}}/eksargocd-ecr-repository-ap:sha-${{github.sha}}"
+          docker tag web:local ${{steps.login-ecr.outputs.registry}}/eksargocd-ecr-repository-web:sha-${{github.sha}}
+          docker tag ap:local ${{steps.login-ecr.outputs.registry}}/eksargocd-ecr-repository-ap:sha-${{github.sha}}
 
       - name: イメージをプッシュ
         run: |
-          docker push ${{steps.login-ecr.outputs.registry}}/eksargocd-ecr-repository-web
-          docker push ${{steps.login-ecr.outputs.registry}}/eksargocd-ecr-repository-ap
+          docker push ${{steps.login-ecr.outputs.registry}}/eksargocd-ecr-repository-web:sha-${{github.sha}}
+          docker push ${{steps.login-ecr.outputs.registry}}/eksargocd-ecr-repository-ap:sha-${{github.sha}}
