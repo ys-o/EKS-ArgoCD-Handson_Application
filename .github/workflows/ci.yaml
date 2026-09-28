@@ -1,0 +1,33 @@
+name: CI：ビルド、テスト、ECRにPUSH
+
+on:
+  push:
+
+jobs:
+  CI:
+    name: CI
+    runs-on: ubuntu-latest
+    env:
+      DB_PASSWORD: cipassword
+      MYSQL_ROOT_PASSWORD: cipassword
+
+    steps:
+      - name: マシンに資材を配置
+        uses: actions/checkout@v7
+
+      - name: docker compose
+        run: docker compose up -d --build
+
+      - name: php構文チェック
+        run: |
+          docker compose exec -T php php -l public/index.php
+          docker compose exec -T php php -l src/status.php
+
+      - name: HTTP疎通チェック
+        run: |
+          curl --fail --silent --show-error --retry 30 --retry-delay 2 --retry-all-errors http://127.0.0.1:8080/health
+          curl --fail --silent --show-error --retry 30 --retry-delay 2 --retry-all-errors http://127.0.0.1:8080/ready
+
+      - name: コンテナ破棄
+        if: always()
+        run: docker compose down -v
