@@ -70,3 +70,50 @@ jobs:
         run: |
           docker push ${{steps.login-ecr.outputs.registry}}/eksargocd-ecr-repository-web:sha-${{github.sha}}
           docker push ${{steps.login-ecr.outputs.registry}}/eksargocd-ecr-repository-ap:sha-${{github.sha}}
+
+
+
+  CD_1-push_to_ecr:
+    name: CD_1_プッシュしたイメージのタグを、webapマニフェストリポジトリのdeploymentのimageに転記（CI全体の成功時のみ）
+    runs-on: ubuntu-latest
+    needs: CI_2-push_to_ecr
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: GHappのトークンの取得
+        id: token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{secrets.GHAPP_APP_ID}}
+          private-key: ${{secrets.GHAPP_PRIVATE_KEY}}
+          owner: ys-o
+          repositories: EKS-ArgoCD-Handson_Application_manifests
+          permission-contents: write
+
+      - name: GHAマシンにwebapマニフェスト用リポジトリ資材を取得・配置
+        uses: actions/checkout@v7
+        with:
+          repository: 'ys-o/EKS-ArgoCD-Handson_Application_manifests'
+          ref: main
+          token: ${{steps.token.outputs.token}}
+
+      - name: 新しいコンテナイメージのタグを、webapのdeploymentマニフェストのimageのタグ部に転記
+        env:
+          ECR_ITTAN_ZIKAGAKI: '619071321369.dkr.ecr.ap-northeast-1.amazonaws.com/eksargocd-ecr-repository-'
+        run: |
+          sed -i "s|${ECR_ITTAN_ZIKAGAKI}web:.*|${ECR_ITTAN_ZIKAGAKI}web:sha-${{github.sha}}|" base/deployment.yaml
+          sed -i "s|${ECR_ITTAN_ZIKAGAKI}ap:.*|${ECR_ITTAN_ZIKAGAKI}ap:sha-${{github.sha}}|" base/deployment.yaml
+
+      - name: 更新した内容をmainブランチに直接PUSH
+        run: |
+          git config user.name "${{vars.GHAPP_APP_NAME}}"
+          git config user.email "noreply@users.noreply.github.com"
+          git add base/deployment.yaml
+          if git diff --cached --quiet; then
+            echo "変更なし"
+            exit 0
+          fi
+          git commit -m "${{vars.GHAPP_APP_NAME}}による自動デプロイです。このCICDフローのSHAは、${{github.sha}}"
+          git push origin HEAD:main
