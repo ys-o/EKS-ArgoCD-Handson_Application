@@ -84,13 +84,20 @@ jobs:
     steps:
       - name: GHappのトークンの取得
         id: token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{secrets.GHAPP_APP_ID}}
           private-key: ${{secrets.GHAPP_PRIVATE_KEY}}
           owner: ys-o
           repositories: EKS-ArgoCD-Handson_Application_manifests
           permission-contents: write
+
+      - name: ユーザー情報取得
+        id: get-user-id
+        run: |
+          echo "user-id=$(gh api "/users/${{ steps.token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
 
       - name: GHAマシンにwebapマニフェスト用リポジトリ資材を取得・配置
         uses: actions/checkout@v7
@@ -108,8 +115,8 @@ jobs:
 
       - name: 更新した内容をmainブランチに直接PUSH
         run: |
-          git config user.name "${{vars.GHAPP_APP_NAME}}"
-          git config user.email "noreply@users.noreply.github.com"
+          git config user.name "${{ steps.token.outputs.app-slug }}[bot]"
+          git config user.email "${{ steps.get-user-id.outputs.user-id }}+${{ steps.token.outputs.app-slug }}[bot]@users.noreply.github.com"
           git add base/deployment.yaml
           if git diff --cached --quiet; then
             echo "変更なし"
