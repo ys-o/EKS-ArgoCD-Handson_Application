@@ -55,7 +55,7 @@ header('Content-Type: text/html; charset=utf-8');
         <article><div class="layer-top"><span>02 / APPLICATION</span><b class="good">応答中</b></div><h2>PHP</h2><p>画面の生成と<br>データベースへの問い合わせ</p><dl><dt>RUNTIME VERSION</dt><dd><?= escape(PHP_VERSION) ?></dd></dl></article>
         <article><div class="layer-top"><span>03 / DATABASE</span><b class="<?= $db['ok'] ? 'good' : 'bad' ?>"><?= $db['ok'] ? '接続成功' : '接続失敗' ?></b></div><h2>MySQL</h2><p>PDO経由の接続と<br><code>SELECT VERSION()</code>の実行</p><dl><dt>DATABASE VERSION</dt><dd><?= escape($db['version'] ?? '取得できません') ?></dd></dl></article>
     </section>
-    <section class="details"><div><span>RELEASE</span><strong><?= escape(setting('APP_VERSION', 'development')) ?></strong></div><div><span>DB TRANSPORT</span><strong><?= $db['ok'] ? ($db['tls'] ? 'TLS / ' . escape($db['tls']) : 'TLSなし（ローカル向け）') : '未確認' ?></strong></div><div><span>CHECKED AT / JST(日本時間)</span><strong><?= escape(date('Y-m-d H:i:s')) ?></strong></div></section>
+    <section class="details"><div><span>RELEASE</span><strong><?= escape(setting('APP_VERSION', 'development')) ?></strong></div><div><span>DB TRANSPORT</span><strong><?= $db['ok'] ? ($db['tls'] ? 'TLS / ' . escape($db['tls']) : 'TLSなし（ローカル向け）') : '未確認' ?></strong></div><div><span>CHECKED AT / JST(日本)</span><strong><?= escape(date('Y-m-d H:i:s')) ?></strong></div></section>
     <footer><span>Original learning application · Nginx / PHP-FPM / MySQL</span><a href="/">再チェック ↗</a></footer>
 </main>
 </body>
